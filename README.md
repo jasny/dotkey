@@ -1,6 +1,9 @@
 DotKey
 ======
 
+[![Build Status](https://travis-ci.org/jasny/dotkey.svg?branch=master)](https://travis-ci.org/jasny/dotkey)
+[![Coverage Status](https://coveralls.io/repos/jasny/dotkey/badge.svg?branch=master&service=github)](https://coveralls.io/github/jasny/dotkey?branch=master)
+
 Access objects and arrays through dot notation.
 
 Inspired by the [node.js Dotty](https://github.com/deoxxa/dotty) library.
