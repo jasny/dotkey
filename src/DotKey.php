@@ -81,8 +81,8 @@ class DotKey
         
         $key = array_shift($index);
         
+        if ((is_array($item) || $item instanceof \Traversable) && isset($item[$key])) return static::getValue($item[$key], $index, $ignore, $err);
         if (is_object($item) && isset($item->$key)) return static::getValue($item->$key, $index, $ignore, $err);
-        if (is_array($item) && isset($item[$key])) return static::getValue($item[$key], $index, $ignore, $err);
 
         if ((!is_object($item) && !is_array($item)) || !$ignore) {
             $err = (object)['var' => isset($item) ? gettype($item) : null, 'incomplete' => count($index) + 1];
