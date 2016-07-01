@@ -81,9 +81,14 @@ class DotKey
         
         $key = array_shift($index);
         
-        if ((is_array($item) || $item instanceof \Traversable) && isset($item[$key])) return static::getValue($item[$key], $index, $ignore, $err);
-        if (is_object($item) && isset($item->$key)) return static::getValue($item->$key, $index, $ignore, $err);
-
+        if ((is_array($item) || $item instanceof \Traversable) && isset($item[$key])) {
+            return static::getValue($item[$key], $index, $ignore, $err);
+        }
+        
+        if (is_object($item) && isset($item->$key)) {
+            return static::getValue($item->$key, $index, $ignore, $err);
+        }
+        
         if ((!is_object($item) && !is_array($item)) || !$ignore) {
             $err = (object)['var' => isset($item) ? gettype($item) : null, 'incomplete' => count($index) + 1];
         }
@@ -150,22 +155,32 @@ class DotKey
 
         $key = array_shift($index);
         
-        if (is_object($item)) {
-            if (empty($index)) {
-                $item->$key = $value;
-                return;
-            }
-            
-            if (!isset($item->$key) && $create) $item->$key = $create === 'array' ? [] : (object)[];
-            if (isset($item->$key)) return static::setValue($item->$key, $index, $value, $create, $err);
-        } elseif (is_array($item)) {
+        if (is_array($item) || $item instanceof \Traversable) {
             if (empty($index)) {
                 $item[$key] = $value;
                 return;
             }
             
-            if (!isset($item[$key]) && $create) $item[$key] = $create === 'array' ? [] : (object)[];
-            if (isset($item[$key])) return static::setValue($item[$key], $index, $value, $create, $err);
+            if (!isset($item[$key]) && $create) {
+                $item[$key] = $create === 'array' ? [] : (object)[];
+            }
+            
+            if (isset($item[$key])) {
+                return static::setValue($item[$key], $index, $value, $create, $err);
+            }
+        } elseif (is_object($item)) {
+            if (empty($index)) {
+                $item->$key = $value;
+                return;
+            }
+            
+            if (!isset($item->$key) && $create) {
+                $item->$key = $create === 'array' ? [] : (object)[];
+            }
+            
+            if (isset($item->$key)) {
+                return static::setValue($item->$key, $index, $value, $create, $err);
+            }
         } else {
             $err = (object)['var' => gettype($item), 'incomplete' => count($index) + 1];
             return;
