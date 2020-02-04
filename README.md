@@ -17,8 +17,8 @@ Inspired by the [node.js Dotty](https://github.com/deoxxa/dotty) library.
 
 ```php
 $data = (object)[
-  a: [
-    b: [
+  "a" => [
+    "b" => [
       "x" => "y"
     ]
   ]
