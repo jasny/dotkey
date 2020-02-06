@@ -8,9 +8,6 @@ use Jasny\DotKey\DotKey;
 use Jasny\DotKey\ResolveException;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Jasny\DotKey\DotKey
- */
 class DotKeyTest extends TestCase
 {
     public function testWithInvalidSubject()
