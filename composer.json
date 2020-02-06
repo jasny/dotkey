@@ -29,5 +29,19 @@
         "psr-4": {
             "Jasny\\DotKey\\Tests\\": "tests/"
         }
-    }
+    },
+    "scripts": {
+        "test": [
+            "phpstan analyse",
+            "phpunit --testdox --colors=always",
+            "phpcs -p src"
+        ]
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

@@ -2,8 +2,10 @@ parameters:
     level: 7
     paths:
         - src
+    treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         - /^Variable property access/
+        - /^Unsafe usage of new static/
 includes:
   	- vendor/phpstan/phpstan-strict-rules/rules.neon

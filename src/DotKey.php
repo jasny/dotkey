@@ -9,19 +9,22 @@ use Throwable;
 /**
  * Access objects and arrays through dot notation.
  *
- * @template TSubject of object|array
+ * @template TSubject
  */
 class DotKey
 {
-    /** @var object|array */
+    /**
+     * @var object|array<string,mixed>
+     * @phpstan-var TSubject&(object|array<string,mixed>)
+     */
     protected $subject;
 
     /**
      * Class constructor.
-     * 
+     *
      * @param object|array $subject
      *
-     * @phpstan-param TSubject $subject
+     * @phpstan-param TSubject&(object|array<string,mixed>) $subject
      */
     public function __construct($subject)
     {
@@ -39,8 +42,9 @@ class DotKey
      */
     public function exists(string $path, string $delimiter = '.'): bool
     {
-        $index = explode($delimiter, trim($path, $delimiter));
         $subject = $this->subject;
+        $index = $this->splitPath($path, $delimiter);
+        ;
 
         foreach ($index as $key) {
             if (!\is_array($subject) && !\is_object($subject)) {
@@ -59,7 +63,7 @@ class DotKey
     
     /**
      * Get a value from subject by path.
-     * 
+     *
      * @param string $path
      * @param string $delimiter
      * @return mixed
@@ -68,7 +72,7 @@ class DotKey
     public function get(string $path, string $delimiter = '.')
     {
         $subject = $this->subject;
-        $index = explode($delimiter, trim($path, $delimiter));
+        $index = $this->splitPath($path, $delimiter);
 
         while ($index !== []) {
             $key = \array_shift($index);
@@ -96,21 +100,21 @@ class DotKey
     
     /**
      * Set a value within the subject by path.
-     * 
+     *
      * @param string $path
      * @param mixed  $value
      * @param string $delimiter
      * @return array|object
      * @throws ResolveException
      *
-     * @phpstan-return TSubject
+     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
     public function set(string $path, $value, string $delimiter = '.')
     {
         $result = $this->subject;
         $subject =& $result;
 
-        $index = explode($delimiter, trim($path, $delimiter));
+        $index = $this->splitPath($path, $delimiter);
 
         while (count($index) > 1) {
             $key = \array_shift($index);
@@ -147,7 +151,7 @@ class DotKey
     
     /**
      * Set a value, creating a structure if needed.
-     * 
+     *
      * @param string    $path
      * @param mixed     $value
      * @param string    $delimiter
@@ -155,14 +159,14 @@ class DotKey
      * @return array|object
      * @throws ResolveException
      *
-     * @phpstan-return TSubject
+     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
     public function put(string $path, $value, string $delimiter = '.', ?bool $assoc = null)
     {
         $result = $this->subject;
         $subject =& $result;
 
-        $index = explode($delimiter, trim($path, $delimiter));
+        $index = $this->splitPath($path, $delimiter);
 
         while (count($index) > 1) {
             $key = \array_shift($index);
@@ -198,11 +202,10 @@ class DotKey
     /**
      * Create property and set the value.
      *
-     * @param array|object $subject
-     * @param string[]     $index    Part or the path that doesn't exist
-     * @param mixed        $value
-     * @param bool|null    $assoc
-     * @return bool
+     * @param mixed     $subject
+     * @param string[]  $index    Part or the path that doesn't exist
+     * @param mixed     $value
+     * @param bool|null $assoc
      */
     protected function setValueCreate(&$subject, array $index, $value, ?bool $assoc = null): void
     {
@@ -229,15 +232,16 @@ class DotKey
     /**
      * Get a particular value back from the config array
      *
-     * @return array|object
+     * @return object|array<string,mixed>
      *
-     * @phpstan-return TSubject
+     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
     public function remove(string $path, string $delimiter = '.')
     {
         $result = $this->subject;
         $subject =& $result;
-        $index = \explode($delimiter, trim($path, $delimiter));
+
+        $index = $this->splitPath($path, $delimiter);
 
         while (\count($index) > 1) {
             $key = \array_shift($index);
@@ -259,8 +263,24 @@ class DotKey
             }
         }
 
-        $key = \reset($index);
+        try {
+            $this->removeChild($subject, $index[0]);
+        } catch (\Error $error) {
+            $msg = "Unable to remove '$path': error at '%s'";
+            throw $this->unresolved($msg, $path, $delimiter, array_slice($index, 0, -1), null, $error);
+        }
 
+        return $result;
+    }
+
+    /**
+     * Remove item or property from subject.
+     *
+     * @param object|array<string,mixed> $subject
+     * @param string                     $key
+     */
+    protected function removeChild(&$subject, string $key): void
+    {
         if (\is_array($subject)) {
             if (\array_key_exists($key, $subject)) {
                 unset($subject[$key]);
@@ -269,18 +289,9 @@ class DotKey
             if ($subject->offsetExists($key)) {
                 unset($subject[$key]);
             }
-        } else {
-            try {
-                if (\property_exists($subject, $key)) {
-                    unset($subject->{$key});
-                }
-            } catch (\Error $error) {
-                $msg = "Unable to remove '$path': error at '%s'";
-                throw $this->unresolved($msg, $path, $delimiter, array_slice($index, 0, -1), null, $error);
-            }
+        } elseif (\property_exists($subject, $key)) {
+            unset($subject->{$key});
         }
-
-        return $result;
     }
 
     /**
@@ -307,17 +318,17 @@ class DotKey
             + ($key !== null ? \strlen($delimiter) + \strlen($key) : 0);
         $invalidPath = $len > 0 ? \substr(\rtrim($path, $delimiter), 0, -1 * $len) : $path;
 
-        return new ResolveException(sprintf($msg, $invalidPath),0, $previous);
+        return new ResolveException(sprintf($msg, $invalidPath), 0, $previous);
     }
 
     /**
      * Make subject a child of the subject.
      * If `$exists` is false, it wasn't possible to decent and subject is returned.
      *
-     * @param array|object $subject
-     * @param string       $key
-     * @param mixed        $exists      output as bool
-     * @param bool         $accessible  Check not only if property exists, but also is accessible.
+     * @param object|array<string,mixed> $subject
+     * @param string                     $key
+     * @param mixed                      $exists      output as bool
+     * @param bool                       $accessible  Check not only if property exists, but also is accessible.
      * @return mixed
      */
     protected function &descend(&$subject, string $key, &$exists, bool $accessible = false)
@@ -351,7 +362,7 @@ class DotKey
     {
         $exists = \property_exists($object, $property);
 
-        if (!$exists || ($exists && isset($subject->{$property}))) {
+        if (!$exists || isset($object->{$property})) {
             return $exists;
         }
 
@@ -364,15 +375,34 @@ class DotKey
         return $reflection->isPublic() && !$reflection->isStatic();
     }
 
+    /**
+     * Explode with trimming and check.
+     * @see explode()
+     *
+     * @param string $path
+     * @param string $delimiter
+     * @return string[]
+     */
+    protected function splitPath(string $path, string $delimiter): array
+    {
+        if ($delimiter === '') {
+            throw new \InvalidArgumentException("Delimiter can't be an empty string");
+        }
+
+        /** @var array<int,string> $parts */
+        $parts = \explode($delimiter, trim($path, $delimiter));
+
+        return $parts;
+    }
+
     
     /**
      * Factory method.
      *
-     * @param object|array $subject
+     * @param object|array<string,mixed> $subject
      * @return static
      *
-     * @template TSubject
-     * @phpstan-param TSubject $subject
+     * @phpstan-param TSubject&(object|array<string,mixed>) $subject
      * @phpstan-return static<TSubject>
      */
     public static function on($subject): self

@@ -100,6 +100,17 @@ class DotKeyTest extends TestCase
         $this->assertTrue(DotKey::on($subject)->exists("n"));
     }
 
+    public function testExistsWithInvalidDelimiter()
+    {
+        $subject = ['a' => ['b' => ['x' => 'y']]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Delimiter can't be an empty string");
+
+        DotKey::on($subject)->get('ab', '');
+    }
+
+
     /**
      * @dataProvider subjectProvider
      */
@@ -145,6 +156,16 @@ class DotKeyTest extends TestCase
         $this->expectExceptionMessage("Unable to get '$path': '$invalidPath' is of type string");
 
         DotKey::on($subject)->get($path, $delimiter);
+    }
+
+    public function testGetWithInvalidDelimiter()
+    {
+        $subject = ['a' => ['b' => ['x' => 'y']]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Delimiter can't be an empty string");
+
+        DotKey::on($subject)->get('ab', '');
     }
 
 
@@ -255,6 +276,17 @@ class DotKeyTest extends TestCase
 
         $this->assertTrue(DotKey::on($subject)->set($path, 10));
     }
+
+    public function testSetWithInvalidDelimiter()
+    {
+        $subject = ['a' => ['b' => ['x' => 'y']]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Delimiter can't be an empty string");
+
+        DotKey::on($subject)->set('ab', 1, '');
+    }
+
 
     /**
      * @dataProvider setSubjectProvider
@@ -453,6 +485,16 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
+    public function testPutWithInvalidDelimiter()
+    {
+        $subject = ['a' => ['b' => ['x' => 'y']]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Delimiter can't be an empty string");
+
+        DotKey::on($subject)->put('ab', 1, '');
+    }
+
 
     public function removeSubjectProvider()
     {
@@ -568,5 +610,15 @@ class DotKeyTest extends TestCase
         $this->expectExceptionMessage("Unable to remove '$path': error at '$at'");
 
         $this->assertTrue(DotKey::on($subject)->remove($path));
+    }
+
+    public function testRemoveWithInvalidDelimiter()
+    {
+        $subject = ['a' => ['b' => ['x' => 'y']]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Delimiter can't be an empty string");
+
+        DotKey::on($subject)->remove('ab', '');
     }
 }
