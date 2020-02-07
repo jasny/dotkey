@@ -58,7 +58,7 @@ The subject may be an array or object. If an object implements `ArrayAccess` it 
 ```php
 use Jasny\DotKey\DotKey;
 
-$obj = (object)$subject;
+$obj = (object)["a" => [ "b" => [ "x" => "y" ] ] ];
 
 DotKey::on($obj)->exists("a.b.x");
 DotKey::on($obj)->set("a.b.q", "foo");
@@ -97,13 +97,14 @@ object.
 ```php
 use Jasny\DotKey\DotKey;
 
-$subject = ["a" => []];
+$subject = ["a" => null];
+$obj = (object)["a" => null];
 
-DotKey::on($subject)->put("a.b.o", 1, '.');                // ["a" => ["b" => ["o" => 1]]]
-DotKey::on($subject)->put("a.b.o", 1, '.', true);          // ["a" => ["b" => ["o" => 1]]]
-DotKey::on($subject)->put("a.b.o", 1, '.', false);         // ["a" => (object)["b" => (object)["o" => 1]]]
+DotKey::on($subject)->put("a.b.o", 1, '.');        // ["a" => ["b" => ["o" => 1]]]
+DotKey::on($subject)->put("a.b.o", 1, '.', true);  // ["a" => ["b" => ["o" => 1]]]
+DotKey::on($subject)->put("a.b.o", 1, '.', false); // ["a" => (object)["b" => (object)["o" => 1]]]
 
-DotKey::on((object)$subject)->put("a.b.o", 1, '.');        // (object)["a" => (object)["b" => (object)["o" => 1]]]
-DotKey::on((object)$subject)->put("a.b.o", 1, '.', true);  // (object)["a" => ["b" => ["o" => 1]]]
-DotKey::on((object)$subject)->put("a.b.o", 1, '.', false); // (object)["a" => (object)["b" => (object)["o" => 1]]]
+DotKey::on($obj)->put("a.b.o", 1, '.');            // (object)["a" => (object)["b" => (object)["o" => 1]]]
+DotKey::on($obj)->put("a.b.o", 1, '.', true);      // (object)["a" => ["b" => ["o" => 1]]]
+DotKey::on($obj)->put("a.b.o", 1, '.', false);     // (object)["a" => (object)["b" => (object)["o" => 1]]]
 ```
