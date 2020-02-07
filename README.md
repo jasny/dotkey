@@ -42,22 +42,18 @@ DotKey::on($subject)->get("a.b");             // ["x" => "y"]
 DotKey::on($subject)->get("a.b.z");           // null
 DotKey::on($subject)->get("a.b.x.o");         // Throws ResolveException because a.b.x is a string
 
-DotKey::on($subject)->set("a.b.q", "foo");    // ["a" => ["b" => ["x" => "y", "q" => "foo"]]] 
-DotKey::on($subject)->set("a.d", ['p' => 1]); // ["a" => ["b" => ["x" => "y"]], "d" => ["p" => 1]]
+DotKey::on($subject)->set("a.b.q", "foo");    // $subject = ["a" => ["b" => ["x" => "y", "q" => "foo"]]] 
+DotKey::on($subject)->set("a.d", ['p' => 1]); // $subject = ["a" => ["b" => ["x" => "y"]], "d" => ["p" => 1]]
 DotKey::on($subject)->set("a.c.x", "bar");    // Throws ResolveException because a.c doesn't exist
 DotKey::on($subject)->set("a.b.x.o", "qux");  // Throws ResolveException because a.b.x is a string
 
-DotKey::on($subject)->put("a.b.q", "foo");    // ["a" => ["b" => ["x" => "y"]], "d" => ["p" => 1]]
-DotKey::on($subject)->put("a.c.x", "bar");    // ["a" => ["b" => ["x" => "y"], "c" => "bar"]]] 
-DotKey::on($subject)->put("a.b.x.o", "qux");  // ["a" => ["b" => ["x" => ["o" => "qux"]]]]
-
-DotKey::on($subject)->remove("a.b.x");
-DotKey::on($subject)->remove("a.c.z");
+DotKey::on($subject)->remove("a.b.x");        // $subject = ["a" => ["b" => []]]
+DotKey::on($subject)->remove("a.c.z");        // $subject isn't modified
 DotKey::on($subject)->remove("a.b.x.o");      // Throws ResolveException because a.b.x is a string
-DotKey::on($subject)->remove("a.b");
+DotKey::on($subject)->remove("a.b");          // $subject = ["a" => []]
 ```
 
-The subject may be an array or object. Objects will be modified. They are not cloned.
+The subject may be an array or object. If an object implements `ArrayAccess` it will be treated as array.
 
 ```php
 use Jasny\DotKey\DotKey;
@@ -66,8 +62,6 @@ $obj = (object)$subject;
 
 DotKey::on($obj)->exists("a.b.x");
 DotKey::on($obj)->set("a.b.q", "foo");
-
-$obj; // (object)["a" => ["b" => ["x" => "y", "q" => "foo"]]] 
 ```
 
 `exists()` will return `false` when trying access a private or static property. All other methods will throw a

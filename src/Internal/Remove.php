@@ -18,17 +18,10 @@ final class Remove
      * @param object|array<string,mixed> $subject
      * @param string                     $path
      * @param string                     $delimiter
-     * @return object|array<string,mixed>
-     *
-     * @template TSubject
-     * @phpstan-param TSubject&(object|array<string,mixed>) $subject
-     * @phpstan-param string                                $path
-     * @phpstan-param string                                $delimiter
-     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
-    public static function remove($subject, string $path, string $delimiter = '.')
+    public static function remove(&$subject, string $path, string $delimiter = '.'): void
     {
-        $result =& $subject;
+        $current =& $subject;
 
         $index = Helpers::splitPath($path, $delimiter);
 
@@ -36,30 +29,28 @@ final class Remove
             $key = \array_shift($index);
 
             try {
-                $subject =& Helpers::descend($subject, $key, $exists);
+                $current =& Helpers::descend($current, $key, $exists);
             } catch (\Error $error) {
                 $msg = "Unable to remove '$path': error at '%s'";
                 throw ResolveException::create($msg, $path, $delimiter, $index, null, $error);
             }
 
             if (!$exists) {
-                return $result;
+                return;
             }
 
-            if (!\is_array($subject) && !\is_object($subject)) {
-                $msg = "Unable to remove '$path': '%s' is of type " . \gettype($subject);
+            if (!\is_array($current) && !\is_object($current)) {
+                $msg = "Unable to remove '$path': '%s' is of type " . \gettype($current);
                 throw ResolveException::create($msg, $path, $delimiter, $index);
             }
         }
 
         try {
-            self::removeChild($subject, $index[0]);
+            self::removeChild($current, $index[0]);
         } catch (\Error $error) {
             $msg = "Unable to remove '$path': error at '%s'";
             throw ResolveException::create($msg, $path, $delimiter, array_slice($index, 0, -1), null, $error);
         }
-
-        return $result;
     }
 
     /**

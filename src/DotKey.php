@@ -6,14 +6,11 @@ namespace Jasny\DotKey;
 
 /**
  * Access objects and arrays through dot notation.
- *
- * @template TSubject
  */
 class DotKey
 {
     /**
      * @var object|array<string,mixed>
-     * @phpstan-var TSubject&(object|array<string,mixed>)
      */
     protected $subject;
 
@@ -21,17 +18,15 @@ class DotKey
      * Class constructor.
      *
      * @param object|array $subject
-     *
-     * @phpstan-param TSubject&(object|array<string,mixed>) $subject
      */
-    public function __construct($subject)
+    public function __construct(&$subject)
     {
         if (!\is_object($subject) && !\is_array($subject)) {
             $type = \gettype($subject);
             throw new \InvalidArgumentException("Subject should be an array or object; $type given");
         }
         
-        $this->subject = $subject;
+        $this->subject =& $subject;
     }
 
     /**
@@ -62,14 +57,11 @@ class DotKey
      * @param string $path
      * @param mixed  $value
      * @param string $delimiter
-     * @return array|object
      * @throws ResolveException
-     *
-     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
-    public function set(string $path, $value, string $delimiter = '.')
+    public function set(string $path, $value, string $delimiter = '.'): void
     {
-        return Internal\Write::set($this->subject, $path, $value, $delimiter);
+        Internal\Write::set($this->subject, $path, $value, $delimiter);
     }
 
     /**
@@ -79,16 +71,13 @@ class DotKey
      * @param mixed     $value
      * @param string    $delimiter
      * @param bool|null $assoc     Create new structure as array. Omit to base upon subject type.
-     * @return array|object
      * @throws ResolveException
-     *
-     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
-    public function put(string $path, $value, string $delimiter = '.', ?bool $assoc = null)
+    public function put(string $path, $value, string $delimiter = '.', ?bool $assoc = null): void
     {
         $assoc ??= is_array($this->subject) || $this->subject instanceof \ArrayAccess;
 
-        return Internal\Write::put($this->subject, $path, $value, $delimiter, $assoc);
+        Internal\Write::put($this->subject, $path, $value, $delimiter, $assoc);
     }
 
     /**
@@ -96,15 +85,11 @@ class DotKey
      *
      * @param string $path
      * @param string $delimiter
-     * @return object|array<string,mixed>
-     *
-     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
-    public function remove(string $path, string $delimiter = '.')
+    public function remove(string $path, string $delimiter = '.'): void
     {
-        return Internal\Remove::remove($this->subject, $path, $delimiter);
+        Internal\Remove::remove($this->subject, $path, $delimiter);
     }
-
 
     
     /**
@@ -112,11 +97,8 @@ class DotKey
      *
      * @param object|array<string,mixed> $subject
      * @return static
-     *
-     * @phpstan-param TSubject&(object|array<string,mixed>) $subject
-     * @phpstan-return static<TSubject>
      */
-    public static function on($subject): self
+    public static function on(&$subject): self
     {
         return new static($subject);
     }

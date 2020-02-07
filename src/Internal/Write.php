@@ -19,32 +19,24 @@ final class Write
      * @param string                     $path
      * @param mixed                      $value
      * @param string                     $delimiter
-     * @return object|array<string,mixed>
      * @throws ResolveException
-     *
-     * @template TSubject
-     * @phpstan-param TSubject&(object|array<string,mixed>) $subject
-     * @phpstan-param string                                $path
-     * @phpstan-param mixed                                 $value
-     * @phpstan-param string                                $delimiter
-     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
-    public static function set($subject, string $path, $value, string $delimiter = '.')
+    public static function set(&$subject, string $path, $value, string $delimiter = '.'): void
     {
-        $result =& $subject;
+        $current =& $subject;
 
         $index = Helpers::splitPath($path, $delimiter);
 
         while (count($index) > 1) {
             $key = \array_shift($index);
 
-            if (!\is_array($subject) && !\is_object($subject)) {
-                $msg = "Unable to set '$path': '%s' is of type " . \gettype($subject);
+            if (!\is_array($current) && !\is_object($current)) {
+                $msg = "Unable to set '$path': '%s' is of type " . \gettype($current);
                 throw ResolveException::create($msg, $path, $delimiter, $index, $key);
             }
 
             try {
-                $subject =& Helpers::descend($subject, $key, $exists);
+                $current =& Helpers::descend($current, $key, $exists);
             } catch (\Error $error) {
                 $msg = "Unable to set '$path': error at '%s'";
                 throw ResolveException::create($msg, $path, $delimiter, $index, null, $error);
@@ -55,17 +47,15 @@ final class Write
             }
         }
 
-        if (\is_array($subject) || $subject instanceof \ArrayAccess) {
-            $subject[$index[0]] = $value;
+        if (\is_array($current) || $current instanceof \ArrayAccess) {
+            $current[$index[0]] = $value;
         } else {
             try {
-                $subject->{$index[0]} = $value;
+                $current->{$index[0]} = $value;
             } catch (\Error $error) {
                 throw new ResolveException("Unable to set '$path': error at '$path'", 0, $error);
             }
         }
-
-        return $result;
     }
 
 
@@ -77,20 +67,11 @@ final class Write
      * @param mixed                      $value
      * @param string                     $delimiter
      * @param bool                       $assoc     Create new structure as array. Omit to base upon subject type.
-     * @return array|object
      * @throws ResolveException
-     *
-     * @template TSubject
-     * @phpstan-param TSubject&(object|array<string,mixed>) $subject
-     * @phpstan-param string                                $path
-     * @phpstan-param mixed                                 $value
-     * @phpstan-param string                                $delimiter
-     * @phpstan-param bool                                  $assoc
-     * @phpstan-return TSubject&(object|array<string,mixed>)
      */
-    public static function put($subject, string $path, $value, string $delimiter = '.', bool $assoc = false)
+    public static function put(&$subject, string $path, $value, string $delimiter = '.', bool $assoc = false): void
     {
-        $result =& $subject;
+        $current =& $subject;
 
         $index = Helpers::splitPath($path, $delimiter);
 
@@ -98,7 +79,7 @@ final class Write
             $key = \array_shift($index);
 
             try {
-                $subject =& Helpers::descend($subject, $key, $exists);
+                $current =& Helpers::descend($current, $key, $exists);
             } catch (\Error $error) {
                 $msg = "Unable to put '$path': error at '%s'";
                 throw ResolveException::create($msg, $path, $delimiter, $index, null, $error);
@@ -109,19 +90,17 @@ final class Write
                 break;
             }
 
-            if (!\is_array($subject) && !\is_object($subject)) {
+            if (!\is_array($current) && !\is_object($current)) {
                 break;
             }
         }
 
         try {
-            self::setValueCreate($subject, $index, $value, $assoc);
+            self::setValueCreate($current, $index, $value, $assoc);
         } catch (\Error $error) {
             $msg = "Unable to put '$path': error at '%s'";
             throw ResolveException::create($msg, $path, $delimiter, array_slice($index, 0, -1), null, $error);
         }
-
-        return $result;
     }
 
     /**

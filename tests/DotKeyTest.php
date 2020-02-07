@@ -15,7 +15,8 @@ class DotKeyTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Subject should be an array or object; string given");
 
-        DotKey::on('foo');
+        $subject = 'foo';
+        DotKey::on($subject);
     }
 
     public function subjectProvider()
@@ -202,23 +203,10 @@ class DotKeyTest extends TestCase
      */
     public function testSet($subject, $expected)
     {
-        $resultAdded = DotKey::on($subject)->set("a.b.n", 1);
+        DotKey::on($subject)->set("a.b.n", 1);
+        DotKey::on($subject)->set("a.q", "foo");
 
-        if (is_array($subject)) {
-            $this->assertIsArray($resultAdded);
-        } else {
-            $this->assertIsObject($resultAdded);
-        }
-
-        $result = DotKey::on($resultAdded)->set("a.q", "foo");
-
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     /**
@@ -228,9 +216,9 @@ class DotKeyTest extends TestCase
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
-        $result = DotKey::on($subject)->set($abx, 'z', $delimiter);
+        DotKey::on($subject)->set($abx, 'z', $delimiter);
 
-        $this->assertEquals(['a' => ['b' => ['x' => 'z']]], $result);
+        $this->assertEquals(['a' => ['b' => ['x' => 'z']]], $subject);
     }
 
     /**
@@ -271,7 +259,7 @@ class DotKeyTest extends TestCase
         $this->expectException(ResolveException::class);
         $this->expectExceptionMessage("Unable to set '$path': error at '$at'");
 
-        $this->assertTrue(DotKey::on($subject)->set($path, 10));
+        DotKey::on($subject)->set($path, 10);
     }
 
     public function testSetWithInvalidDelimiter()
@@ -290,23 +278,10 @@ class DotKeyTest extends TestCase
      */
     public function testPut($subject, $expected)
     {
-        $resultAdded = DotKey::on($subject)->put("a.b.n", 1);
+        DotKey::on($subject)->put("a.b.n", 1);
+        DotKey::on($subject)->put("a.q", "foo");
 
-        if (is_array($subject)) {
-            $this->assertIsArray($resultAdded);
-        } else {
-            $this->assertIsObject($resultAdded);
-        }
-
-        $result = DotKey::on($resultAdded)->put("a.q", "foo");
-
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     /**
@@ -316,9 +291,9 @@ class DotKeyTest extends TestCase
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
-        $result = DotKey::on($subject)->put($abx, 'z', $delimiter);
+        DotKey::on($subject)->put($abx, 'z', $delimiter);
 
-        $this->assertEquals(['a' => ['b' => ['x' => 'z']]], $result);
+        $this->assertEquals(['a' => ['b' => ['x' => 'z']]], $subject);
     }
 
     public function putSubjectProvider()
@@ -375,24 +350,18 @@ class DotKeyTest extends TestCase
      */
     public function testPutCreate($subject, $expected)
     {
-        $result = DotKey::on($subject)->put("a.q.n", 1);
+        DotKey::on($subject)->put("a.q.n", 1);
 
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     public function testPutCreateDeep()
     {
         $subject = ['a' => ['q' => 1]];
-        $result = DotKey::on($subject)->put("a.b.c.d.e.f", 1);
+        DotKey::on($subject)->put("a.b.c.d.e.f", 1);
 
         $expected = ['a' => ['q' => 1, 'b' => ['c' => ['d' => ['e' => ['f' => 1]]]]]];
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     /**
@@ -400,15 +369,9 @@ class DotKeyTest extends TestCase
      */
     public function testPutCreateForceAssoc($subject, $_, $expected)
     {
-        $result = DotKey::on($subject)->put("a.q.n", 1, '.', true);
+        DotKey::on($subject)->put("a.q.n", 1, '.', true);
 
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     /**
@@ -416,15 +379,9 @@ class DotKeyTest extends TestCase
      */
     public function testPutCreateForceObject($subject, $_, $__, $expected)
     {
-        $result = DotKey::on($subject)->put("a.q.n", 1, '.', false);
+        DotKey::on($subject)->put("a.q.n", 1, '.', false);
 
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     /**
@@ -435,7 +392,7 @@ class DotKeyTest extends TestCase
         $this->expectException(ResolveException::class);
         $this->expectExceptionMessage("Unable to put '$path': error at '$at'");
 
-        $this->assertTrue(DotKey::on($subject)->put($path, 10));
+        DotKey::on($subject)->put($path, 10);
     }
 
     public function putOverwriteSubjectProvider()
@@ -471,15 +428,9 @@ class DotKeyTest extends TestCase
      */
     public function testPutOverwriteExisting($subject, $expected)
     {
-        $result = DotKey::on($subject)->put("a.b.n", 1, '.');
+        DotKey::on($subject)->put("a.b.n", 1, '.');
 
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     public function testPutWithInvalidDelimiter()
@@ -534,15 +485,9 @@ class DotKeyTest extends TestCase
      */
     public function testRemove($subject, $expected)
     {
-        $result = DotKey::on($subject)->remove("a.b.n");
+        DotKey::on($subject)->remove("a.b.n");
 
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     /**
@@ -550,15 +495,9 @@ class DotKeyTest extends TestCase
      */
     public function testRemoveBlock($subject, $_, $expected)
     {
-        $result = DotKey::on($subject)->remove("a.b");
+        DotKey::on($subject)->remove("a.b");
 
-        if (is_object($subject)) {
-            $this->assertSame($subject, $result);
-        } else {
-            $this->assertNotSame($subject, $result);
-        }
-
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected, $subject);
     }
 
     /**
@@ -568,9 +507,9 @@ class DotKeyTest extends TestCase
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
-        $result = DotKey::on($subject)->remove($abx, $delimiter);
+        DotKey::on($subject)->remove($abx, $delimiter);
 
-        $this->assertEquals(['a' => ['b' => []]], $result);
+        $this->assertEquals(['a' => ['b' => []]], $subject);
     }
 
     /**
@@ -578,9 +517,9 @@ class DotKeyTest extends TestCase
      */
     public function testRemoveWithNonExistingPath($subject)
     {
-        $result = DotKey::on($subject)->remove('a.r.d');
+        DotKey::on($subject)->remove('a.r.d');
 
-        $this->assertSame($subject, $result);
+        $this->assertSame($subject, $subject);
     }
 
     /**
@@ -606,7 +545,7 @@ class DotKeyTest extends TestCase
         $this->expectException(ResolveException::class);
         $this->expectExceptionMessage("Unable to remove '$path': error at '$at'");
 
-        $this->assertTrue(DotKey::on($subject)->remove($path));
+        DotKey::on($subject)->remove($path);
     }
 
     public function testRemoveWithInvalidDelimiter()
