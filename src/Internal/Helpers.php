@@ -18,23 +18,54 @@ final class Helpers
      * @param string                     $key
      * @param mixed                      $exists      output as bool
      * @param bool                       $accessible  Check not only if property exists, but also is accessible.
+     * @param bool                       $copy        Copy objects
      * @return mixed
      */
-    public static function &descend(&$subject, string $key, &$exists, bool $accessible = false)
+    public static function &descend(&$subject, string $key, &$exists, bool $accessible = false, bool $copy = false)
     {
-        if (!\is_array($subject) && !$subject instanceof \ArrayAccess) {
-            $exists = $accessible
-                ? self::propertyIsAccessible($subject, $key)
-                : \property_exists($subject, $key);
+        if ($copy && is_object($subject)) {
+            $subject = clone $subject;
+        }
 
-            if ($exists) {
-                $subject =& $subject->{$key};
-            }
+        if (\is_array($subject) || $subject instanceof \ArrayAccess) {
+            return self::descendArray($subject, $key, $exists);
         } else {
-            $exists = \is_array($subject) ? \array_key_exists($key, $subject) : $subject->offsetExists($key);
-            if ($exists) {
-                $subject =& $subject[$key];
-            }
+            return self::descendObject($subject, $key, $exists, $accessible);
+        }
+    }
+
+    /**
+     * @param array<string,mixed>|\ArrayAccess<string,mixed> $subject
+     * @param string                                         $key
+     * @param mixed                                          $exists
+     * @return mixed
+     */
+    private static function &descendArray(&$subject, string $key, &$exists)
+    {
+        $exists = \is_array($subject) ? \array_key_exists($key, $subject) : $subject->offsetExists($key);
+
+        if ($exists) {
+            $subject =& $subject[$key];
+        }
+
+        return $subject;
+    }
+
+    /**
+     * @param object $subject
+     * @param string $key
+     * @param mixed  $exists
+     * @param bool   $accessible
+     * @return mixed
+     */
+    private static function &descendObject(object &$subject, string $key, &$exists, bool $accessible)
+    {
+        $exists = $accessible
+            ? self::propertyIsAccessible($subject, $key)
+            : \property_exists($subject, $key);
+
+        if ($exists) {
+            $subject =& $subject->{$key};
         }
 
         return $subject;

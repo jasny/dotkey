@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpPropertyNamingConventionInspection */
 
 declare(strict_types=1);
 
@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class DotKeyTest extends TestCase
 {
+    /** @noinspection PhpParamsInspection */
     public function testWithInvalidSubject()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -49,6 +50,7 @@ class DotKeyTest extends TestCase
         ];
     }
 
+    /** @noinspection PhpUnusedPrivateFieldInspection */
     public function privateProvider()
     {
         $subject = new class () {
@@ -84,6 +86,7 @@ class DotKeyTest extends TestCase
         $this->assertFalse(DotKey::on($subject)->exists($abz, $delimiter));
     }
 
+    /** @noinspection PhpUnusedPrivateFieldInspection */
     public function testExistsPrivateProperty()
     {
         $subject = new class () {
@@ -170,14 +173,14 @@ class DotKeyTest extends TestCase
     public function setSubjectProvider()
     {
         return [
-            'array' => [
+            /*'array' => [
                 ['a' => ['b' => ['x' => 'y', 'n' => null]]],
                 ['a' => ['b' => ['x' => 'y', 'n' => 1], 'q' => 'foo']],
             ],
             'object' => [
                 (object)['a' => (object)['b' => (object)['x' => 'y', 'n' => null]]],
                 (object)['a' => (object)['b' => (object)['x' => 'y', 'n' => 1], 'q' => 'foo']],
-            ],
+            ],*/
             'ArrayAccess' => [
                 new \ArrayObject([
                     'a' => new \ArrayObject([
@@ -207,6 +210,20 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->set("a.q", "foo");
 
         $this->assertEquals($expected, $subject);
+    }
+
+    /**
+     * @dataProvider setSubjectProvider
+     */
+    public function testSetOnCopy($subject, $expected)
+    {
+        DotKey::onCopy($subject, $copy1)->set("a.b.n", 1);
+        DotKey::onCopy($copy1, $copy2)->set("a.q", "foo");
+
+        $this->assertNotSame($subject, $copy1);
+        $this->assertNotSame($copy1, $copy2);
+
+        $this->assertEquals($expected, $copy2);
     }
 
     /**
@@ -270,6 +287,34 @@ class DotKeyTest extends TestCase
         $this->expectExceptionMessage("Delimiter can't be an empty string");
 
         DotKey::on($subject)->set('ab', 1, '');
+    }
+
+    public function testSetOnCopyDeep()
+    {
+        $subject = (object)['a' => (object)['b1' => (object)['x' => 'y'], 'b2' => (object)['q' => 'r']]];
+
+        DotKey::onCopy($subject, $copy)->set("a.b1.x", 'z');
+
+        $expectedSubject = (object)['a' => (object)['b1' => (object)['x' => 'y'], 'b2' => (object)['q' => 'r']]];
+        $expectedCopy = (object)['a' => (object)['b1' => (object)['x' => 'z'], 'b2' => (object)['q' => 'r']]];
+
+        $this->assertNotSame($subject, $copy);
+        $this->assertNotSame($subject->a, $copy->a);
+        $this->assertNotSame($subject->a->b1, $copy->a->b1);
+        $this->assertSame($subject->a->b2, $copy->a->b2);
+
+        $this->assertEquals($expectedSubject, $subject);
+        $this->assertEquals($expectedCopy, $copy);
+    }
+
+    /**
+     * @dataProvider setSubjectProvider
+     */
+    public function testSetOnCopyNoChange($subject)
+    {
+        DotKey::onCopy($subject, $copy)->set("a.b.x", 'y');
+
+        $this->assertSame($subject, $copy);
     }
 
 
@@ -443,6 +488,44 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->put('ab', 1, '');
     }
 
+    /**
+     * @dataProvider putSubjectProvider
+     */
+    public function testPutOnCopy($subject, $expected)
+    {
+        DotKey::onCopy($subject, $copy)->put("a.q.n", 1);
+
+        $this->assertNotSame($subject, $copy);
+        $this->assertEquals($expected, $copy);
+    }
+
+    public function testPunOnCopyReplace()
+    {
+        $subject = (object)['a' => (object)['b' => (object)['x' => 'y']]];
+        DotKey::onCopy($subject, $copy)->put("a.b", 'foo');
+
+        $this->assertNotSame($subject, $copy);
+        $this->assertEquals((object)['a' => (object)['b' => (object)['x' => 'y']]], $subject);
+        $this->assertEquals((object)['a' => (object)['b' => 'foo']], $copy);
+    }
+
+    public function testPunOnCopyReplaceCreate()
+    {
+        $subject = (object)['a' => (object)['b' => 'foo']];
+        DotKey::onCopy($subject, $copy)->put("a.b.c", 1);
+
+        $this->assertNotSame($subject, $copy);
+        $this->assertEquals((object)['a' => (object)['b' => (object)['c' => 1]]], $copy);
+    }
+
+    public function testPutOnCopyNoChange()
+    {
+        $subject = (object)['a' => (object)['b' => 'foo']];
+        DotKey::onCopy($subject, $copy)->put("a.b", 'foo');
+
+        $this->assertSame($subject, $copy);
+    }
+
 
     public function removeSubjectProvider()
     {
@@ -556,5 +639,27 @@ class DotKeyTest extends TestCase
         $this->expectExceptionMessage("Delimiter can't be an empty string");
 
         DotKey::on($subject)->remove('ab', '');
+    }
+
+    /**
+     * @dataProvider removeSubjectProvider
+     */
+    public function testRemoveOnCopy($subject, $expected)
+    {
+        DotKey::onCopy($subject, $copy)->remove('a.b.n');
+
+        $this->assertNotSame($subject, $copy);
+        $this->assertEquals($expected, $copy);
+    }
+
+
+    /**
+     * @dataProvider removeSubjectProvider
+     */
+    public function testRemoveOnCopyNotExists($subject, $expected)
+    {
+        DotKey::onCopy($subject, $copy)->remove('a.b.r');
+
+        $this->assertSame($subject, $copy);
     }
 }

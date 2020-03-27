@@ -1,6 +1,6 @@
 {
     "name": "jasny/dotkey",
-    "description": "Access objects and arrays through dot notation",
+    "description": "Dot notation access for objects and arrays",
     "keywords": ["json", "object", "array", "query"],
     "license": "MIT",
     "authors": [

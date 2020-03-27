@@ -1,7 +1,7 @@
 ![jasny-banner](https://user-images.githubusercontent.com/100821/62123924-4c501c80-b2c9-11e9-9677-2ebc21d9b713.png)
 
-Jasny DB
-========
+DotKey
+===
 
 [![Build Status](https://secure.travis-ci.org/jasny/dotkey.png?branch=master)](http://travis-ci.org/jasny/dotkey)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jasny/dotkey/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jasny/dotkey/?branch=master)
@@ -9,7 +9,7 @@ Jasny DB
 [![Packagist Stable Version](https://img.shields.io/packagist/v/jasny/dotkey.svg)](https://packagist.org/packages/jasny/dotkey)
 [![Packagist License](https://img.shields.io/packagist/l/jasny/dotkey.svg)](https://packagist.org/packages/jasny/dotkey)
 
-Access objects and arrays through dot notation.
+Dot notation access for objects and arrays.
 
 Inspired by the [node.js Dotty](https://github.com/deoxxa/dotty) library.
 
@@ -58,7 +58,7 @@ The subject may be an array or object. If an object implements `ArrayAccess` it 
 ```php
 use Jasny\DotKey\DotKey;
 
-$obj = (object)["a" => [ "b" => [ "x" => "y" ] ] ];
+$obj = (object)["a" => (object)["b" => (object)["x" => "y"]]];
 
 DotKey::on($obj)->exists("a.b.x");
 DotKey::on($obj)->set("a.b.q", "foo");
@@ -66,6 +66,32 @@ DotKey::on($obj)->set("a.b.q", "foo");
 
 `exists()` will return `false` when trying access a private or static property. All other methods will throw a
 `ResolveException`.
+
+### Copy
+
+By default the target is modified in place. With the `onCopy()` factory method, a copy will be made instead.
+
+```php
+use Jasny\DotKey\DotKey;
+
+$source = ["a" => ["b" => ["x" => "y"]]];
+
+DotKey::onCopy($source, $copy)->set("a.b.q", "foo");  // $copy = ["a" => ["b" => ["x" => "y", "q" => "foo"]]]
+```
+
+With `onCopy()`, objects will be cloned if they're modified.
+
+```php
+use Jasny\DotKey\DotKey;
+
+$source = (object)["f" => (object)["x" => "y"], "g" => (object)["x" => "z"]]]];
+
+DotKey::onCopy($source, $copy)->set("f.q", "foo");
+
+$copy === $source;       // false, source is cloned
+$copy->f === $source->f; // false, `f` is cloned and modified
+$copy->g === $source->g; // true, `g` is not cloned
+```
 
 ### Delimiter
 

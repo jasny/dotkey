@@ -18,21 +18,21 @@ final class Remove
      * @param object|array<string,mixed> $subject
      * @param string                     $path
      * @param string                     $delimiter
+     * @param bool                       $copy
      */
-    public static function remove(&$subject, string $path, string $delimiter = '.'): void
+    public static function apply(&$subject, string $path, string $delimiter, bool $copy): void
     {
         $current =& $subject;
-
         $index = Helpers::splitPath($path, $delimiter);
 
         while (\count($index) > 1) {
             $key = \array_shift($index);
 
             try {
-                $current =& Helpers::descend($current, $key, $exists);
+                $current =& Helpers::descend($current, $key, $exists, false, $copy);
             } catch (\Error $error) {
                 $msg = "Unable to remove '$path': error at '%s'";
-                throw ResolveException::create($msg, $path, $delimiter, $index, null, $error);
+                throw ResolveException::create($msg, $path, $delimiter, $index, $error);
             }
 
             if (!$exists) {
@@ -46,10 +46,14 @@ final class Remove
         }
 
         try {
+            if ($copy && is_object($current)) {
+                $current = clone $current;
+            }
+
             self::removeChild($current, $index[0]);
         } catch (\Error $error) {
             $msg = "Unable to remove '$path': error at '%s'";
-            throw ResolveException::create($msg, $path, $delimiter, array_slice($index, 0, -1), null, $error);
+            throw ResolveException::create($msg, $path, $delimiter, array_slice($index, 0, -1), $error);
         }
     }
 
