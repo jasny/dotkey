@@ -3,7 +3,7 @@
 DotKey
 ===
 
-[![Build Status](https://secure.travis-ci.org/jasny/dotkey.png?branch=master)](http://travis-ci.org/jasny/dotkey)
+[![PHP](https://github.com/jasny/dotkey/actions/workflows/php.yml/badge.svg)](https://github.com/jasny/dotkey/actions/workflows/php.yml)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jasny/dotkey/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jasny/dotkey/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/jasny/dotkey/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/jasny/dotkey/?branch=master)
 [![Packagist Stable Version](https://img.shields.io/packagist/v/jasny/dotkey.svg)](https://packagist.org/packages/jasny/dotkey)
