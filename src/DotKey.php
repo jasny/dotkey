@@ -43,9 +43,6 @@ class DotKey
     /**
      * Get a value from subject by path.
      *
-     * @param string $path
-     * @param string $delimiter
-     * @return mixed
      * @throws ResolveException
      */
     public function get(string $path, string $delimiter = '.'): mixed
@@ -57,9 +54,6 @@ class DotKey
     /**
      * Set a value within the subject by path.
      *
-     * @param string $path
-     * @param mixed  $value
-     * @param string $delimiter
      * @throws ResolveException
      */
     public function set(string $path, mixed $value, string $delimiter = '.'): void
@@ -74,10 +68,6 @@ class DotKey
     /**
      * Set a value, creating a structure if needed.
      *
-     * @param string    $path
-     * @param mixed     $value
-     * @param string    $delimiter
-     * @param bool|null $assoc     Create new structure as array. Omit to base upon subject type.
      * @throws ResolveException
      */
     public function put(string $path, mixed $value, string $delimiter = '.', ?bool $assoc = null): void
@@ -93,9 +83,6 @@ class DotKey
 
     /**
      * Get a particular value back from the config array
-     *
-     * @param string $path
-     * @param string $delimiter
      */
     public function remove(string $path, string $delimiter = '.'): void
     {
@@ -104,6 +91,17 @@ class DotKey
         }
 
         Internal\Remove::apply($this->subject, $path, $delimiter, $this->copy);
+    }
+
+    /**
+     * Update a value within the subject by path.
+     *
+     * @throws ResolveException
+     */
+    public function update(string $path, callable $callback, string $delimiter = '.'): void
+    {
+        $value = $this->get($path, $delimiter);
+        $this->set($path, $callback($value), $delimiter);
     }
 
 

@@ -609,12 +609,27 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expected, $copy);
     }
 
-
     #[DataProvider('removeSubjectProvider')]
     public function testRemoveOnCopyNotExists(mixed $subject, mixed $_): void
     {
         DotKey::onCopy($subject, $copy)->remove('a.b.r');
 
         $this->assertSame($subject, $copy);
+    }
+
+    public function testUpdate(): void
+    {
+        $subject = ['a' => ['b' => 1]];
+        DotKey::on($subject)->update('a.b', fn($v) => $v + 1);
+
+        $this->assertEquals(['a' => ['b' => 2]], $subject);
+    }
+
+    public function testUpdateNonExisting(): void
+    {
+        $subject = ['a' => ['b' => 1]];
+        DotKey::on($subject)->update('a.c', fn($v) => isset($v) ? $v + 1 : 0);
+
+        $this->assertEquals(['a' => ['b' => 1, 'c' => 0]], $subject);
     }
 }

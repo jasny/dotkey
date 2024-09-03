@@ -42,15 +42,20 @@ DotKey::on($subject)->get("a.b");             // ["x" => "y"]
 DotKey::on($subject)->get("a.b.z");           // null
 DotKey::on($subject)->get("a.b.x.o");         // Throws ResolveException because a.b.x is a string
 
-DotKey::on($subject)->set("a.b.q", "foo");    // $subject = ["a" => ["b" => ["x" => "y", "q" => "foo"]]] 
+DotKey::on($subject)->set("a.b.q", "foo");    // $subject = ["a" => ["b" => ["x" => "y", "q" => "foo"]]]
 DotKey::on($subject)->set("a.d", ['p' => 1]); // $subject = ["a" => ["b" => ["x" => "y"]], "d" => ["p" => 1]]
 DotKey::on($subject)->set("a.c.x", "bar");    // Throws ResolveException because a.c doesn't exist
 DotKey::on($subject)->set("a.b.x.o", "qux");  // Throws ResolveException because a.b.x is a string
+
+DotKey::on($subject)->put("a.b.q", "foo");    // $subject = ["a" => ["b" => ["x" => "y", "q" => "foo"]]]
+DotKey::on($subject)->put("a.c.x", "bar");    // $subject = ["a" => ["b" => ["x" => "y"]], "c" => ["x" => "bar"]]
 
 DotKey::on($subject)->remove("a.b.x");        // $subject = ["a" => ["b" => []]]
 DotKey::on($subject)->remove("a.c.z");        // $subject isn't modified
 DotKey::on($subject)->remove("a.b.x.o");      // Throws ResolveException because a.b.x is a string
 DotKey::on($subject)->remove("a.b");          // $subject = ["a" => []]
+
+DotKey::on($subject)->update("a.b", fn($value) => array_map('strtoupper', $value)); // $subject = ["a" => ["b" => ["x" => "Y"]]]
 ```
 
 The subject may be an array or object. If an object implements `ArrayAccess` it will be treated as array.
