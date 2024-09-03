@@ -7,7 +7,7 @@
         {
             "name": "Arnold Daniels",
             "email": "arnold@jasny.net",
-            "homepage": "http://www.jasny.net"
+            "homepage": "https://www.jasny.net"
         }
     ],
     "support": {
@@ -15,10 +15,12 @@
         "source": "https://github.com/jasny/dotkey"
     },
     "require": {
-        "php": ">=7.4.0"
+        "php": ">=8.1.0"
     },
     "require-dev": {
-        "jasny/php-code-quality": "2.6.*"
+        "phpstan/phpstan": "^1.12",
+        "phpunit/phpunit": "^11.3",
+        "squizlabs/php_codesniffer": "^3.10"
     },
     "autoload": {
         "psr-4": {
@@ -33,7 +35,7 @@
     "scripts": {
         "test": [
             "phpstan analyse",
-            "phpunit --testdox --colors=always",
+            "XDEBUG_MODE=coverage phpunit --testdox --colors=always --coverage-text",
             "phpcs -p src"
         ]
     },

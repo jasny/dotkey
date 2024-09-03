@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpPropertyNamingConventionInspection */
+<?php
+
+/** @noinspection PhpPropertyNamingConventionInspection */
 
 declare(strict_types=1);
 
@@ -6,21 +8,15 @@ namespace Jasny\DotKey\Tests;
 
 use Jasny\DotKey\DotKey;
 use Jasny\DotKey\ResolveException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class DotKeyTest extends TestCase
 {
-    /** @noinspection PhpParamsInspection */
-    public function testWithInvalidSubject()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("Subject should be an array or object; string given");
-
-        $subject = 'foo';
-        DotKey::on($subject);
-    }
-
-    public function subjectProvider()
+    /**
+     * @return array<string, mixed>
+     */
+    public static function subjectProvider(): array
     {
         $array = ['a' => ['b' => ['x' => 'y', 'n' => null]]];
         $object = (object)['a' => (object)['b' => (object)['x' => 'y', 'n' => null]]];
@@ -39,7 +35,10 @@ class DotKeyTest extends TestCase
         ];
     }
 
-    public function pathProvider()
+    /**
+     * @return array<string, mixed>
+     */
+    public static function pathProvider(): array
     {
         return [
             'a.b.*'   => ['.', 'a.b.x', 'a.b.z'],
@@ -50,8 +49,11 @@ class DotKeyTest extends TestCase
         ];
     }
 
-    /** @noinspection PhpUnusedPrivateFieldInspection */
-    public function privateProvider()
+    /**
+     * @noinspection PhpUnusedPrivateFieldInspection
+     * @return array<string, mixed>
+     */
+    public static function privateProvider(): array
     {
         $subject = new class () {
             private $a = ['b' => 1];
@@ -64,10 +66,8 @@ class DotKeyTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider subjectProvider
-     */
-    public function testExists($subject)
+    #[DataProvider('subjectProvider')]
+    public function testExists(mixed $subject): void
     {
         $this->assertTrue(DotKey::on($subject)->exists("a.b.x"));
         $this->assertTrue(DotKey::on($subject)->exists("a.b.n"));
@@ -75,10 +75,8 @@ class DotKeyTest extends TestCase
         $this->assertFalse(DotKey::on($subject)->exists("a.b.x.o"));
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testExistsWithDelimiter(string $delimiter, string $abx, string $abz)
+    #[DataProvider('pathProvider')]
+    public function testExistsWithDelimiter(string $delimiter, string $abx, string $abz): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -87,12 +85,12 @@ class DotKeyTest extends TestCase
     }
 
     /** @noinspection PhpUnusedPrivateFieldInspection */
-    public function testExistsPrivateProperty()
+    public function testExistsPrivateProperty(): void
     {
         $subject = new class () {
-            private $a = 'apple';
-            private $b = ['x' => 'banana'];
-            public $n = null;
+            private string $a = 'apple';
+            private array $b = ['x' => 'banana'];
+            public mixed $n = null;
         };
 
         $this->assertFalse(DotKey::on($subject)->exists("a"));
@@ -101,7 +99,7 @@ class DotKeyTest extends TestCase
         $this->assertTrue(DotKey::on($subject)->exists("n"));
     }
 
-    public function testExistsWithInvalidDelimiter()
+    public function testExistsWithInvalidDelimiter(): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -112,20 +110,16 @@ class DotKeyTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider subjectProvider
-     */
-    public function testGet($subject, $ab)
+    #[DataProvider('subjectProvider')]
+    public function testGet(mixed $subject, mixed $ab): void
     {
         $this->assertEquals("y", DotKey::on($subject)->get("a.b.x"));
         $this->assertSame($ab, DotKey::on($subject)->get("a.b"));
         $this->assertNull(DotKey::on($subject)->get("a.b.z"));
     }
 
-    /**
-     * @dataProvider privateProvider
-     */
-    public function testGetPrivateProperty($subject, string $path, string $at)
+    #[DataProvider('privateProvider')]
+    public function testGetPrivateProperty(mixed $subject, string $path, string $at): void
     {
         $this->expectException(ResolveException::class);
         $this->expectExceptionMessage("Unable to get '$path': error at '$at'");
@@ -133,10 +127,8 @@ class DotKeyTest extends TestCase
         $this->assertTrue(DotKey::on($subject)->get($path));
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testGetWithDelimiter(string $delimiter, string $abx, string $abz)
+    #[DataProvider('pathProvider')]
+    public function testGetWithDelimiter(string $delimiter, string $abx, string $abz): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -144,10 +136,8 @@ class DotKeyTest extends TestCase
         $this->assertNull(DotKey::on($subject)->get($abz, $delimiter));
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testGetWithUnresolvablePath(string $delimiter, string $basePath)
+    #[DataProvider('pathProvider')]
+    public function testGetWithUnresolvablePath(string $delimiter, string $basePath): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
         $path = str_replace('x', 'x' . $delimiter . 'o1' . $delimiter . 'q11', $basePath);
@@ -159,7 +149,7 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->get($path, $delimiter);
     }
 
-    public function testGetWithInvalidDelimiter()
+    public function testGetWithInvalidDelimiter(): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -170,17 +160,20 @@ class DotKeyTest extends TestCase
     }
 
 
-    public function setSubjectProvider()
+    /**
+     * @return array<string, mixed>
+     */
+    public static function setSubjectProvider(): array
     {
         return [
-            /*'array' => [
+            'array' => [
                 ['a' => ['b' => ['x' => 'y', 'n' => null]]],
                 ['a' => ['b' => ['x' => 'y', 'n' => 1], 'q' => 'foo']],
             ],
             'object' => [
                 (object)['a' => (object)['b' => (object)['x' => 'y', 'n' => null]]],
                 (object)['a' => (object)['b' => (object)['x' => 'y', 'n' => 1], 'q' => 'foo']],
-            ],*/
+            ],
             'ArrayAccess' => [
                 new \ArrayObject([
                     'a' => new \ArrayObject([
@@ -201,10 +194,8 @@ class DotKeyTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider setSubjectProvider
-     */
-    public function testSet($subject, $expected)
+    #[DataProvider('setSubjectProvider')]
+    public function testSet(mixed $subject, mixed $expected): void
     {
         DotKey::on($subject)->set("a.b.n", 1);
         DotKey::on($subject)->set("a.q", "foo");
@@ -212,10 +203,8 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expected, $subject);
     }
 
-    /**
-     * @dataProvider setSubjectProvider
-     */
-    public function testSetOnCopy($subject, $expected)
+    #[DataProvider('setSubjectProvider')]
+    public function testSetOnCopy(mixed $subject, mixed $expected): void
     {
         DotKey::onCopy($subject, $copy1)->set("a.b.n", 1);
         DotKey::onCopy($copy1, $copy2)->set("a.q", "foo");
@@ -226,10 +215,8 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expected, $copy2);
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testSetWithDelimiter(string $delimiter, string $abx)
+    #[DataProvider('pathProvider')]
+    public function testSetWithDelimiter(string $delimiter, string $abx): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -238,10 +225,8 @@ class DotKeyTest extends TestCase
         $this->assertEquals(['a' => ['b' => ['x' => 'z']]], $subject);
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testSetWithNonExistingPath(string $delimiter, string $basePath)
+    #[DataProvider('pathProvider')]
+    public function testSetWithNonExistingPath(string $delimiter, string $basePath): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
         $path = str_replace('x', 'c' . $delimiter . 'd', $basePath);
@@ -253,10 +238,8 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->set($path, '', $delimiter);
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testSetWithUnresolvablePath(string $delimiter, string $basePath)
+    #[DataProvider('pathProvider')]
+    public function testSetWithUnresolvablePath(string $delimiter, string $basePath): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
         $path = str_replace('x', 'x' . $delimiter . 'o1' . $delimiter . 'q11', $basePath);
@@ -268,10 +251,8 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->set($path, '', $delimiter);
     }
 
-    /**
-     * @dataProvider privateProvider
-     */
-    public function testSetPrivateProperty($subject, string $path, string $at)
+    #[DataProvider('privateProvider')]
+    public function testSetPrivateProperty(mixed $subject, string $path, string $at): void
     {
         $this->expectException(ResolveException::class);
         $this->expectExceptionMessage("Unable to set '$path': error at '$at'");
@@ -279,7 +260,7 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->set($path, 10);
     }
 
-    public function testSetWithInvalidDelimiter()
+    public function testSetWithInvalidDelimiter(): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -289,7 +270,7 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->set('ab', 1, '');
     }
 
-    public function testSetOnCopyDeep()
+    public function testSetOnCopyDeep(): void
     {
         $subject = (object)['a' => (object)['b1' => (object)['x' => 'y'], 'b2' => (object)['q' => 'r']]];
 
@@ -307,10 +288,8 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expectedCopy, $copy);
     }
 
-    /**
-     * @dataProvider setSubjectProvider
-     */
-    public function testSetOnCopyNoChange($subject)
+    #[DataProvider('setSubjectProvider')]
+    public function testSetOnCopyNoChange(mixed $subject): void
     {
         DotKey::onCopy($subject, $copy)->set("a.b.x", 'y');
 
@@ -318,10 +297,8 @@ class DotKeyTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider setSubjectProvider
-     */
-    public function testPut($subject, $expected)
+    #[DataProvider('setSubjectProvider')]
+    public function testPut(mixed $subject, mixed $expected): void
     {
         DotKey::on($subject)->put("a.b.n", 1);
         DotKey::on($subject)->put("a.q", "foo");
@@ -329,10 +306,8 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expected, $subject);
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testPutWithDelimiter(string $delimiter, string $abx)
+    #[DataProvider('pathProvider')]
+    public function testPutWithDelimiter(string $delimiter, string $abx): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -341,7 +316,10 @@ class DotKeyTest extends TestCase
         $this->assertEquals(['a' => ['b' => ['x' => 'z']]], $subject);
     }
 
-    public function putSubjectProvider()
+    /**
+     * @return array<string, mixed>
+     */
+    public static function putSubjectProvider(): array
     {
         return [
             'array' => [
@@ -390,17 +368,15 @@ class DotKeyTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider putSubjectProvider
-     */
-    public function testPutCreate($subject, $expected)
+    #[DataProvider('putSubjectProvider')]
+    public function testPutCreate(mixed $subject, mixed $expected): void
     {
         DotKey::on($subject)->put("a.q.n", 1);
 
         $this->assertEquals($expected, $subject);
     }
 
-    public function testPutCreateDeep()
+    public function testPutCreateDeep(): void
     {
         $subject = ['a' => ['q' => 1]];
         DotKey::on($subject)->put("a.b.c.d.e.f", 1);
@@ -409,30 +385,24 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expected, $subject);
     }
 
-    /**
-     * @dataProvider putSubjectProvider
-     */
-    public function testPutCreateForceAssoc($subject, $_, $expected)
+    #[DataProvider('putSubjectProvider')]
+    public function testPutCreateForceAssoc(mixed $subject, mixed $_, mixed $expected): void
     {
         DotKey::on($subject)->put("a.q.n", 1, '.', true);
 
         $this->assertEquals($expected, $subject);
     }
 
-    /**
-     * @dataProvider putSubjectProvider
-     */
-    public function testPutCreateForceObject($subject, $_, $__, $expected)
+    #[DataProvider('putSubjectProvider')]
+    public function testPutCreateForceObject(mixed $subject, mixed $_, mixed $__, mixed $expected): void
     {
         DotKey::on($subject)->put("a.q.n", 1, '.', false);
 
         $this->assertEquals($expected, $subject);
     }
 
-    /**
-     * @dataProvider privateProvider
-     */
-    public function testPutPrivateProperty($subject, string $path, string $at)
+    #[DataProvider('privateProvider')]
+    public function testPutPrivateProperty($subject, string $path, string $at): void
     {
         $this->expectException(ResolveException::class);
         $this->expectExceptionMessage("Unable to put '$path': error at '$at'");
@@ -440,7 +410,10 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->put($path, 10);
     }
 
-    public function putOverwriteSubjectProvider()
+    /**
+     * @return array<string, mixed>
+     */
+    public static function putOverwriteSubjectProvider(): array
     {
         return [
             'array' => [
@@ -468,17 +441,15 @@ class DotKeyTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider putOverwriteSubjectProvider
-     */
-    public function testPutOverwriteExisting($subject, $expected)
+    #[DataProvider('putOverwriteSubjectProvider')]
+    public function testPutOverwriteExisting(mixed $subject, mixed $expected): void
     {
         DotKey::on($subject)->put("a.b.n", 1, '.');
 
         $this->assertEquals($expected, $subject);
     }
 
-    public function testPutWithInvalidDelimiter()
+    public function testPutWithInvalidDelimiter(): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -488,10 +459,8 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->put('ab', 1, '');
     }
 
-    /**
-     * @dataProvider putSubjectProvider
-     */
-    public function testPutOnCopy($subject, $expected)
+    #[DataProvider('putSubjectProvider')]
+    public function testPutOnCopy(mixed $subject, mixed $expected): void
     {
         DotKey::onCopy($subject, $copy)->put("a.q.n", 1);
 
@@ -499,7 +468,7 @@ class DotKeyTest extends TestCase
         $this->assertEquals($expected, $copy);
     }
 
-    public function testPunOnCopyReplace()
+    public function testPunOnCopyReplace(): void
     {
         $subject = (object)['a' => (object)['b' => (object)['x' => 'y']]];
         DotKey::onCopy($subject, $copy)->put("a.b", 'foo');
@@ -509,7 +478,7 @@ class DotKeyTest extends TestCase
         $this->assertEquals((object)['a' => (object)['b' => 'foo']], $copy);
     }
 
-    public function testPunOnCopyReplaceCreate()
+    public function testPunOnCopyReplaceCreate(): void
     {
         $subject = (object)['a' => (object)['b' => 'foo']];
         DotKey::onCopy($subject, $copy)->put("a.b.c", 1);
@@ -518,7 +487,7 @@ class DotKeyTest extends TestCase
         $this->assertEquals((object)['a' => (object)['b' => (object)['c' => 1]]], $copy);
     }
 
-    public function testPutOnCopyNoChange()
+    public function testPutOnCopyNoChange(): void
     {
         $subject = (object)['a' => (object)['b' => 'foo']];
         DotKey::onCopy($subject, $copy)->put("a.b", 'foo');
@@ -526,8 +495,10 @@ class DotKeyTest extends TestCase
         $this->assertSame($subject, $copy);
     }
 
-
-    public function removeSubjectProvider()
+    /**
+     * @return array<string, mixed>
+     */
+    public static function removeSubjectProvider(): array
     {
         return [
             'array' => [
@@ -562,31 +533,25 @@ class DotKeyTest extends TestCase
             ],
         ];
     }
-    
-    /**
-     * @dataProvider removeSubjectProvider
-     */
-    public function testRemove($subject, $expected)
+
+    #[DataProvider('removeSubjectProvider')]
+    public function testRemove(mixed $subject, mixed $expected): void
     {
         DotKey::on($subject)->remove("a.b.n");
 
         $this->assertEquals($expected, $subject);
     }
 
-    /**
-     * @dataProvider removeSubjectProvider
-     */
-    public function testRemoveBlock($subject, $_, $expected)
+    #[DataProvider('removeSubjectProvider')]
+    public function testRemoveBlock(mixed $subject, mixed $_, mixed $expected): void
     {
         DotKey::on($subject)->remove("a.b");
 
         $this->assertEquals($expected, $subject);
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testRemoveWithDelimiter(string $delimiter, string $abx)
+    #[DataProvider('pathProvider')]
+    public function testRemoveWithDelimiter(string $delimiter, string $abx): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -595,20 +560,16 @@ class DotKeyTest extends TestCase
         $this->assertEquals(['a' => ['b' => []]], $subject);
     }
 
-    /**
-     * @dataProvider removeSubjectProvider
-     */
-    public function testRemoveWithNonExistingPath($subject)
+    #[DataProvider('removeSubjectProvider')]
+    public function testRemoveWithNonExistingPath(mixed $subject): void
     {
         DotKey::on($subject)->remove('a.r.d');
 
         $this->assertSame($subject, $subject);
     }
 
-    /**
-     * @dataProvider pathProvider
-     */
-    public function testRemoveWithUnresolvablePath(string $delimiter, string $basePath)
+    #[DataProvider('pathProvider')]
+    public function testRemoveWithUnresolvablePath(string $delimiter, string $basePath): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
         $path = str_replace('x', 'x' . $delimiter . 'o1' . $delimiter . 'q11', $basePath);
@@ -620,10 +581,8 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->remove($path, $delimiter);
     }
 
-    /**
-     * @dataProvider privateProvider
-     */
-    public function testRemovePrivateProperty($subject, string $path, string $at)
+    #[DataProvider('privateProvider')]
+    public function testRemovePrivateProperty(mixed $subject, string $path, string $at): void
     {
         $this->expectException(ResolveException::class);
         $this->expectExceptionMessage("Unable to remove '$path': error at '$at'");
@@ -631,7 +590,7 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->remove($path);
     }
 
-    public function testRemoveWithInvalidDelimiter()
+    public function testRemoveWithInvalidDelimiter(): void
     {
         $subject = ['a' => ['b' => ['x' => 'y']]];
 
@@ -641,10 +600,8 @@ class DotKeyTest extends TestCase
         DotKey::on($subject)->remove('ab', '');
     }
 
-    /**
-     * @dataProvider removeSubjectProvider
-     */
-    public function testRemoveOnCopy($subject, $expected)
+    #[DataProvider('removeSubjectProvider')]
+    public function testRemoveOnCopy(mixed $subject, mixed $expected): void
     {
         DotKey::onCopy($subject, $copy)->remove('a.b.n');
 
@@ -653,10 +610,8 @@ class DotKeyTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider removeSubjectProvider
-     */
-    public function testRemoveOnCopyNotExists($subject, $expected)
+    #[DataProvider('removeSubjectProvider')]
+    public function testRemoveOnCopyNotExists(mixed $subject, mixed $_): void
     {
         DotKey::onCopy($subject, $copy)->remove('a.b.r');
 

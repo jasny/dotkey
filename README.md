@@ -69,7 +69,7 @@ DotKey::on($obj)->set("a.b.q", "foo");
 
 ### Copy
 
-By default the target is modified in place. With the `onCopy()` factory method, a copy will be made instead.
+By default, the target is modified in place. With the `onCopy()` factory method, a copy will be made instead.
 
 ```php
 use Jasny\DotKey\DotKey;
@@ -117,7 +117,7 @@ thrown.
 If it already exists and isn't an array or object, it will be overwritten.
 
 The structure `put()` creates is either an associative array or an `\stdClass` object, depending on the type of the
-subject. Passing `true` as fourth argument forces this to an array, while passing `false` forces it to creating an
+subject. Passing `true` as fourth argument forces this to an array, while passing `false` forces it to create an
 object.
 
 ```php

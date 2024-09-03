@@ -14,7 +14,7 @@ class DotKey
     /**
      * @var object|array<string,mixed>
      */
-    protected $subject;
+    protected object|array $subject;
 
     protected bool $copy;
 
@@ -25,13 +25,8 @@ class DotKey
      * @param object|array<string,mixed> $subject
      * @param int                        $opts     Binary set of options
      */
-    public function __construct(&$subject, int $opts = 0)
+    public function __construct(array|object &$subject, int $opts = 0)
     {
-        if (!\is_object($subject) && !\is_array($subject)) {
-            $type = \gettype($subject);
-            throw new \InvalidArgumentException("Subject should be an array or object; $type given");
-        }
-
         $this->subject =& $subject;
         $this->copy = (bool)($opts & self::COPY);
     }
@@ -53,7 +48,7 @@ class DotKey
      * @return mixed
      * @throws ResolveException
      */
-    public function get(string $path, string $delimiter = '.')
+    public function get(string $path, string $delimiter = '.'): mixed
     {
         return Internal\Read::get($this->subject, $path, $delimiter);
     }
@@ -67,7 +62,7 @@ class DotKey
      * @param string $delimiter
      * @throws ResolveException
      */
-    public function set(string $path, $value, string $delimiter = '.'): void
+    public function set(string $path, mixed $value, string $delimiter = '.'): void
     {
         if ($this->copy && Internal\Read::same($this->subject, $path, $delimiter, $value)) {
             return;
@@ -85,7 +80,7 @@ class DotKey
      * @param bool|null $assoc     Create new structure as array. Omit to base upon subject type.
      * @throws ResolveException
      */
-    public function put(string $path, $value, string $delimiter = '.', ?bool $assoc = null): void
+    public function put(string $path, mixed $value, string $delimiter = '.', ?bool $assoc = null): void
     {
         if ($this->copy && Internal\Read::same($this->subject, $path, $delimiter, $value)) {
             return;
@@ -118,7 +113,7 @@ class DotKey
      * @param object|array<string,mixed> $subject
      * @return static
      */
-    public static function on(&$subject): self
+    public static function on(array|object &$subject): self
     {
         return new static($subject);
     }
@@ -130,7 +125,7 @@ class DotKey
      * @param mixed                      $copy
      * @return static
      */
-    public static function onCopy($source, &$copy): self
+    public static function onCopy(array|object $source, mixed &$copy): self
     {
         $copy = $source;
 
